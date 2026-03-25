@@ -1,0 +1,144 @@
+/* Everforest Dark Theme for Starlight */
+/* Palette based on sainnhe/everforest */
+
+:root,
+[data-theme='dark'] {
+  --sl-color-accent-low: #3d4220;
+  --sl-color-accent: #a7c080;
+  --sl-color-accent-high: #d5e8b0;
+
+  --sl-color-white: #d3c6aa;
+  --sl-color-gray-1: #d3c6aa;
+  --sl-color-gray-2: #b9bfb0;
+  --sl-color-gray-3: #859289;
+  --sl-color-gray-4: #5c6a72;
+  --sl-color-gray-5: #3d484d;
+  --sl-color-gray-6: #2d353b;
+  --sl-color-black: #272e33;
+
+  --sl-color-bg: #272e33;
+  --sl-color-bg-nav: #2d353b;
+  --sl-color-bg-sidebar: #2d353b;
+  --sl-color-hairline-light: #3d484d;
+  --sl-color-hairline-shade: #3d484d;
+
+  --sl-color-text: #d3c6aa;
+  --sl-color-text-accent: #a7c080;
+  --sl-color-text-invert: #272e33;
+
+  /* Syntax highlighting colors */
+  --sl-color-green: #a7c080;
+  --sl-color-green-low: #3d4220;
+  --sl-color-orange: #e69875;
+  --sl-color-orange-low: #4a3325;
+  --sl-color-red: #e67e80;
+  --sl-color-red-low: #4a2525;
+  --sl-color-blue: #7fbbb3;
+  --sl-color-blue-low: #1e3a3a;
+  --sl-color-yellow: #dbbc7f;
+  --sl-color-yellow-low: #3a3220;
+  --sl-color-purple: #d699b6;
+  --sl-color-purple-low: #3a2040;
+}
+
+[data-theme='light'] {
+  --sl-color-accent-low: #e9f0d8;
+  --sl-color-accent: #5c6a4a;
+  --sl-color-accent-high: #3a4a28;
+
+  --sl-color-white: #5c6a72;
+  --sl-color-gray-1: #5c6a72;
+  --sl-color-gray-2: #7a8a8a;
+  --sl-color-gray-3: #8da2a0;
+  --sl-color-gray-4: #aabdb5;
+  --sl-color-gray-5: #d8e0d5;
+  --sl-color-gray-6: #eef1ed;
+  --sl-color-black: #fdf6e3;
+
+  --sl-color-bg: #fdf6e3;
+  --sl-color-bg-nav: #f4f0d9;
+  --sl-color-bg-sidebar: #f4f0d9;
+  --sl-color-text: #5c6a72;
+  --sl-color-text-accent: #5c6a4a;
+}
+
+/* Landing page hero */
+.hero {
+  background: linear-gradient(135deg, #2d353b 0%, #272e33 50%, #1e2428 100%);
+  border-bottom: 1px solid #3d484d;
+}
+
+/* Code blocks */
+pre, code {
+  background: #2d353b !important;
+  border: 1px solid #3d484d;
+  border-radius: 6px;
+}
+
+/* Headings */
+h1, h2, h3 {
+  color: #a7c080;
+}
+
+/* Links */
+a:not([class]) {
+  color: #7fbbb3;
+  text-decoration: none;
+}
+
+a:not([class]):hover {
+  color: #a7c080;
+  text-decoration: underline;
+}
+
+/* Badges / Tags */
+.badge {
+  background: #3d4220;
+  color: #a7c080;
+  border: 1px solid #a7c080;
+}
+
+/* Sidebar active */
+.sidebar a[aria-current='page'] {
+  background: #3d484d;
+  color: #a7c080;
+  border-left: 3px solid #a7c080;
+}
+
+/* Callouts / Asides */
+.starlight-aside {
+  border-color: #a7c080;
+  background: #2d353b;
+}
+
+.starlight-aside--tip {
+  border-color: #7fbbb3;
+}
+
+.starlight-aside--caution {
+  border-color: #dbbc7f;
+}
+
+.starlight-aside--danger {
+  border-color: #e67e80;
+}
+
+/* Table of contents */
+.right-sidebar {
+  border-left: 1px solid #3d484d;
+}
+
+/* Search */
+.pagefind-ui__search-input {
+  background: #2d353b;
+  border-color: #3d484d;
+  color: #d3c6aa;
+}
+
+/* Custom landing page gradient text */
+.hero-title {
+  background: linear-gradient(90deg, #a7c080, #7fbbb3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
