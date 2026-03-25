@@ -29,4 +29,9 @@ export default defineConfig({
       customCss: ['./src/styles/everforest.css'],
     }),
   ],
+  vite: {
+    ssr: {
+      noExternal: ['zod'],
+    },
+  },
 });
