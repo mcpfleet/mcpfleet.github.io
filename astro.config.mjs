@@ -7,14 +7,9 @@ export default defineConfig({
     starlight({
       title: 'mcpfleet',
       description: 'Vendor-agnostic MCP server manager — manage your AI tools like a fleet',
-      logo: {
-        light: './src/assets/logo-light.svg',
-        dark: './src/assets/logo-dark.svg',
-        replacesTitle: false,
+      social: {
+        github: 'https://github.com/mcpfleet/mcpfleet',
       },
-      social: [
-        { icon: 'github', label: 'GitHub', href: 'https://github.com/mcpfleet/mcpfleet' },
-      ],
       sidebar: [
         {
           label: 'Getting Started',
@@ -28,8 +23,6 @@ export default defineConfig({
           label: 'Reference',
           items: [
             { label: 'CLI Commands', slug: 'reference/cli' },
-            { label: 'Configuration', slug: 'reference/config' },
-            { label: 'Registry API', slug: 'reference/registry-api' },
           ],
         },
       ],
