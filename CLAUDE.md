@@ -5,13 +5,15 @@ Astro + Starlight site for mcpfleet (landing page and docs, content in `src/cont
 ## Commands
 
 ```bash
-npm install        # install dependencies
+npm ci             # install dependencies exactly as pinned in package-lock.json
 npm run dev        # local dev server with hot reload
 npm run build      # production build into dist/
 npm run preview    # serve the built dist/ locally
 ```
 
-Deploy (`.github/workflows/deploy.yml`) runs `npm install` and `npm run build` on Node 20 on every push to `main` and publishes `dist/` to GitHub Pages. There is no CI on pull requests: run `npm run build` locally before merging.
+Deploy (`.github/workflows/deploy.yml`) runs `npm ci` and `npm run build` on Node 20 on every push to `main` and publishes `dist/` to GitHub Pages. There is no CI on pull requests: run `npm run build` locally before merging.
+
+Add or upgrade a dependency with `npm install <package>` and commit the updated `package-lock.json` with it; `npm ci` fails when the lockfile and `package.json` disagree.
 
 ## Platform
 
