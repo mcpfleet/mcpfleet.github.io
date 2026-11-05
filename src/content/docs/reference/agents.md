@@ -18,7 +18,7 @@ sidebar:
 | `windsurf` | `~/.codeium/windsurf/mcp_config.json` on every OS (on Windows `~` is `%USERPROFILE%`) | `mcpServers` |
 | `zed` | `~/.config/zed/settings.json`<br>Windows: `%APPDATA%\Zed\settings.json` | `context_servers` |
 
-The terminal UI (`mcpfleet` without arguments) lists the same paths, resolved for your machine, on its **Adapters** tab.
+Once you are logged in (`mcpfleet auth login`), the terminal UI (`mcpfleet` without arguments) lists the same paths, resolved for your machine, on its **Adapters** tab.
 
 ## How apply merges
 

@@ -45,6 +45,8 @@ Without a subcommand, mcpfleet opens a terminal UI with three tabs:
 
 Keys: `tab` switches tabs, `1`–`3` jump to a tab, `q` or `ctrl+c` quits.
 
+The tabs stay empty until you log in with `mcpfleet auth login`.
+
 ---
 
 ## `mcpfleet auth`
