@@ -25,6 +25,7 @@ export default defineConfig({
           items: [
             { label: 'CLI Commands', slug: 'reference/cli' },
             { label: 'Registry API', slug: 'reference/api' },
+            { label: 'Agents', slug: 'reference/agents' },
           ],
         },
       ],
