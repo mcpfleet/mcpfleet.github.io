@@ -24,6 +24,7 @@ export default defineConfig({
           label: 'Reference',
           items: [
             { label: 'CLI Commands', slug: 'reference/cli' },
+            { label: 'Registry API', slug: 'reference/api' },
           ],
         },
       ],
