@@ -53,9 +53,10 @@ Errors use `application/problem+json`:
 |--------|------|
 | `401` | Missing or invalid token |
 | `403` | `POST /bootstrap` when a token already exists |
-| `404` | Server not found (`GET` or `PUT /v1/servers/{id}`) |
+| `404` | Server not found (`GET`, `PUT` or `DELETE /v1/servers/{id}`); `detail` is `server not found` |
+| `409` | Server `name` already taken (`POST /v1/servers`, or `PUT` renaming a server); `detail` names it, e.g. `server name "github" is already taken` |
 | `422` | Request body does not match the schema |
-| `500` | Database error, e.g. creating a server whose `name` is already taken |
+| `500` | Unexpected database error |
 
 Successful JSON responses also carry a `$schema` field with the URL of the response's JSON Schema; clients can ignore it.
 
@@ -135,7 +136,7 @@ curl http://localhost:8080/v1/servers/github -H "Authorization: Bearer $MCPFLEET
 
 ### `POST /v1/servers`
 
-Create a server. Only `name` is required. A name that already exists fails with `500`.
+Create a server. Only `name` is required. A name that already exists fails with `409`.
 
 ```bash
 curl -X POST http://localhost:8080/v1/servers \
@@ -152,7 +153,7 @@ curl -X POST http://localhost:8080/v1/servers \
 
 ### `PUT /v1/servers/{id}`
 
-Replace a server. `{id}` is the `id` or the `name`; the body has the same shape as for `POST`. This is a full replacement, not a patch: fields you omit are cleared, and an omitted `transport` becomes `stdio`. Sending a different `name` renames the server. Unknown → `404`.
+Replace a server. `{id}` is the `id` or the `name`; the body has the same shape as for `POST`. This is a full replacement, not a patch: fields you omit are cleared, and an omitted `transport` becomes `stdio`. Sending a different `name` renames the server; renaming to a name another server already uses fails with `409`. Sending the server's own name is fine. Unknown → `404`.
 
 ```bash
 curl -X PUT http://localhost:8080/v1/servers/github \
@@ -163,7 +164,7 @@ curl -X PUT http://localhost:8080/v1/servers/github \
 
 ### `DELETE /v1/servers/{id}`
 
-Delete a server by `id` or `name`. Returns `204` also when nothing matched.
+Delete a server by `id` or `name`. Returns `204` on success and `404` when no server matched.
 
 ```bash
 curl -X DELETE http://localhost:8080/v1/servers/github -H "Authorization: Bearer $MCPFLEET_TOKEN"

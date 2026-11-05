@@ -228,7 +228,13 @@ mcpfleet delete <name>
 Server "github" removed from registry.
 ```
 
-The registry reports success even when no server has that name. `delete` does not touch agent config files: remove the entry there by hand if you no longer want it.
+When no server has that name, `delete` fails with exit code `1`:
+
+```text
+Error: server "github" not found in registry
+```
+
+This needs a registry that answers `404` for an unknown server; an older registry answers `204`, and `delete` then reports success. `delete` does not touch agent config files: remove the entry there by hand if you no longer want it.
 
 ---
 
