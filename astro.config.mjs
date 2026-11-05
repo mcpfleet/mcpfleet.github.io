@@ -17,12 +17,15 @@ export default defineConfig({
             { label: 'Introduction', slug: 'guides/introduction' },
             { label: 'Installation', slug: 'guides/installation' },
             { label: 'Quick Start', slug: 'guides/quickstart' },
+            { label: 'Self-Hosting the Registry', slug: 'guides/self-hosting' },
           ],
         },
         {
           label: 'Reference',
           items: [
             { label: 'CLI Commands', slug: 'reference/cli' },
+            { label: 'Registry API', slug: 'reference/api' },
+            { label: 'Agents', slug: 'reference/agents' },
           ],
         },
       ],
