@@ -31,7 +31,7 @@ Every command that talks to the registry (`list`, `apply`, `push`, `pull`, `dele
 | Auth token | `~/.config/mcpfleet/token` (written by `auth login`, file mode `0600`) |
 | Secrets for `env` values | `~/.config/mcpfleet/vault.enc`, encrypted with a key kept in the OS keyring |
 
-A trailing `/` on the registry URL is ignored. Without a stored token the command fails with `Error: registry client: registry: not authenticated — run 'mcpfleet auth login' first`.
+A trailing `/` on the registry URL is ignored. Without a stored token `list`, `push`, `pull` and `delete` fail with `Error: registry client: registry: not authenticated — run 'mcpfleet auth login' first`, and `apply` fails with `Error: registry: not authenticated — run 'mcpfleet auth login' first`.
 
 ---
 
