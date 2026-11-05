@@ -138,7 +138,13 @@ mcpfleet apply <agent> [--all] [--tag <tag>]...
 | `--tag <tag>` | Apply only servers that have this tag. Repeat the flag (or pass a comma-separated list) to apply servers that have **any** of the tags |
 | `--all` | Apply all servers. This is also what happens without `--tag`, so the flag changes nothing today |
 
-Before writing, `env` entries that reference a secret (`{"secret": "<name>"}`) are replaced by the value stored under that name in the local vault. A secret that is not in the vault becomes an empty string. If the vault cannot be opened, mcpfleet logs a warning and writes every secret as an empty string.
+Before writing, `env` entries that reference a secret (`{"secret": "<name>"}`) are replaced by the value stored under that name in the local vault (store it with [`mcpfleet secret set`](#mcpfleet-secret)). If a referenced secret is not in the vault, `apply` stops with an error that names every missing secret, with its server and variable, and writes nothing:
+
+```text
+Error: missing secrets in vault: github_token (server github, env GITHUB_TOKEN); set them with: mcpfleet secret set <name>
+```
+
+If the vault cannot be opened (for example the OS keyring is locked), `apply` also stops before writing and shows the vault error. The vault is opened only when an applied server references a secret, so `apply` without secret references never asks for the keyring.
 
 ```bash
 mcpfleet apply cursor
@@ -235,6 +241,66 @@ Error: server "github" not found in registry
 ```
 
 This needs a registry that answers `404` for an unknown server; an older registry answers `204`, and `delete` then reports success. `delete` does not touch agent config files: remove the entry there by hand if you no longer want it.
+
+---
+
+## `mcpfleet secret`
+
+Manage the secrets in the local vault (`~/.config/mcpfleet/vault.enc`, encrypted with AES-256-GCM, key in the OS keyring). Registry entries refer to them by name (`env: GITHUB_TOKEN: {secret: github_token}`), and `apply` fills in the values. Secrets never leave your machine.
+
+### `mcpfleet secret set`
+
+Store a secret, or replace the value of an existing one.
+
+```bash
+mcpfleet secret set <name> [--stdin]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--stdin` | Read the value from standard input instead of the hidden prompt. One trailing newline (`\n` or `\r\n`) is dropped, everything else is kept |
+
+The value is never taken from an argument, so it does not end up in your shell history. Without `--stdin`, a prompt asks for the value and does not show what you type; when standard input is not a terminal, the command fails with `stdin is not a terminal; pipe the value with --stdin`. An empty value is rejected. The name can be any non-empty string without leading or trailing spaces; use the name the registry entry references.
+
+```bash
+mcpfleet secret set github_token
+printf '%s' "$GITHUB_TOKEN" | mcpfleet secret set github_token --stdin
+```
+
+```text
+✓ Saved secret github_token
+```
+
+Replacing an existing secret prints `✓ Updated secret github_token`.
+
+### `mcpfleet secret list`
+
+Print the names of the stored secrets, one per line, sorted. Values are never printed.
+
+```bash
+mcpfleet secret list
+```
+
+```text
+github_token
+slack_token
+```
+
+With no secrets stored, nothing goes to stdout and a hint goes to stderr.
+
+### `mcpfleet secret rm`
+
+Remove a secret from the vault.
+
+```bash
+mcpfleet secret rm <name>
+```
+
+```text
+✓ Removed secret github_token
+```
+
+A name that is not in the vault fails with `secret "<name>" not found`.
 
 ---
 
