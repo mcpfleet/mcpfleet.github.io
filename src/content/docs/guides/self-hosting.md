@@ -97,7 +97,7 @@ curl -X POST http://localhost:8080/bootstrap \
 
 - The request body is the object itself, `{"name": "..."}`. A body wrapped in `{"body": {...}}` is rejected with `422`.
 - The `token` value is shown **only once**. The registry stores only its SHA-256 hash, so save it now.
-- Bootstrap works only while the database has no tokens at all. Once any token exists, it answers `403 Forbidden`, so nobody can mint a token on a running registry without authenticating.
+- Bootstrap works once in the life of the database. As soon as any token has been created, it answers `403 Forbidden`, even if every token is deleted later, so nobody can mint a token on a running registry without authenticating.
 
 To give other people or machines their own token, create more with an existing one (see [Registry API](/reference/api/#tokens)):
 
@@ -111,6 +111,40 @@ curl -X POST http://localhost:8080/v1/tokens \
 :::caution
 Every token has full access: it can read and change all servers and create or delete tokens. There are no scopes or roles.
 :::
+
+The registry refuses to delete its last token (`409 Conflict`). To rotate a token, create the new one first, then delete the old one with `DELETE /v1/tokens/{id}`.
+
+## Recover access
+
+If you lose every token value, create a new token on the machine that holds the database. The `registry token create` command writes straight to the database file, so it needs shell access to the host or container, not the API. It works whether the registry is running or stopped.
+
+Docker Compose:
+
+```bash
+# registry running
+docker compose exec registry registry token create --name rescue
+
+# registry stopped
+docker compose run --rm registry token create --name rescue
+```
+
+Docker, with the container and volume from [Docker](#docker):
+
+```bash
+# registry running
+docker exec mcpfleet-registry registry token create --name rescue
+
+# registry stopped
+docker run --rm -v mcpfleet-data:/data mcpfleet-registry token create --name rescue
+```
+
+Go, with the same database file the server uses:
+
+```bash
+DATABASE_URL=./registry.db CGO_ENABLED=1 go run ./cmd/registry token create --name rescue
+```
+
+The command prints the new token alone on standard output (a confirmation line goes to standard error). Log in with it, list the tokens with `GET /v1/tokens`, and delete the ones you no longer have.
 
 ## Connect the CLI
 
@@ -137,3 +171,7 @@ docker compose up -d --build
 ```
 
 The volume keeps the data and the new version migrates the database on start.
+
+:::note[Upgrading from a version with a reopening bootstrap]
+Older registry versions reopened `POST /bootstrap` once every token was deleted. On its first start, the new version marks every database that has tokens or servers as bootstrapped. A database with neither looks like a fresh install and stays open, so run the bootstrap (or `registry token create`) right after the upgrade.
+:::

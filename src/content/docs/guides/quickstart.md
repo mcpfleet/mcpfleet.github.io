@@ -47,7 +47,7 @@ The response holds your token:
 {"$schema":"...","id":"...","name":"admin","token":"mcp_...","created_at":"..."}
 ```
 
-Save the `token` value now: the registry shows it only once. The bootstrap endpoint works only while the registry has no tokens.
+Save the `token` value now: the registry shows it only once. The bootstrap endpoint works only once per registry; later tokens come from an existing token or, if you lose them all, from [Recover access](/guides/self-hosting/#recover-access).
 
 ## 3. Log In
 
