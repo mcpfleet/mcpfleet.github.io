@@ -35,7 +35,7 @@ Every adapter updates the file in place instead of replacing it:
 A missing file (or an empty one) is created, including its directory.
 
 :::caution[Secrets end up in plain text]
-`env` entries that reference a secret are resolved from your local vault before writing, so the agent's config file contains the secret **value**. A secret missing from the vault is written as an empty string. Keep these files out of version control and shared folders.
+`env` entries that reference a secret are resolved from your local vault before writing, so the agent's config file contains the secret **value**. A secret missing from the vault stops `apply` with an error naming it, and nothing is written; store it with `mcpfleet secret set <name>`. Keep these files out of version control and shared folders.
 :::
 
 Only `name`, `command`, `args` and `env` of a server are written. Every entry describes a local process the agent starts (stdio); `transport`, `install`, `tags` and `platforms` are not written to agent config files. `args` and `env` are left out of an entry when the server has none.

@@ -120,7 +120,32 @@ fetch       uvx      mcp-server-fetch
 filesystem  npx      -y @modelcontextprotocol/server-filesystem /home/me/projects
 ```
 
-## 7. Apply Them to an Agent
+## 7. Store the Secret
+
+A server that needs a token references a secret by name instead of holding the value, for example:
+
+```yaml
+- name: github
+  command: npx
+  args: ["-y", "@modelcontextprotocol/server-github"]
+  env:
+    GITHUB_TOKEN:
+      secret: github_token
+```
+
+Store the value in your local vault before you apply. The prompt does not show what you type:
+
+```bash
+mcpfleet secret set github_token
+```
+
+```
+✓ Saved secret github_token
+```
+
+In a script, pipe the value in with `--stdin`. `mcpfleet secret list` shows the stored names. If a server references a secret that is not in the vault, `apply` stops with an error naming it and changes nothing. The servers in `servers.yaml` above use no secrets, so you can skip this step for them.
+
+## 8. Apply Them to an Agent
 
 Write every server from the registry into Cursor's config:
 
@@ -140,7 +165,7 @@ mcpfleet apply --tag dev cursor
 
 `apply` adds or updates the mcpfleet servers in the agent's config and leaves your other entries alone. Supported agents: `claude-code`, `claude-desktop`, `crush`, `cursor`, `windsurf`, `zed`.
 
-## 8. Verify
+## 9. Verify
 
 Check that Cursor's MCP configuration was updated:
 
@@ -164,7 +189,7 @@ cat ~/.cursor/mcp.json
 }
 ```
 
-## 9. Back Up Your Definitions
+## 10. Back Up Your Definitions
 
 Pull everything from the registry into a YAML file in the same format as `servers.yaml`:
 
