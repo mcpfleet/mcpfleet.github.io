@@ -52,9 +52,9 @@ Errors use `application/problem+json`:
 | Status | When |
 |--------|------|
 | `401` | Missing or invalid token |
-| `403` | `POST /bootstrap` when a token already exists |
-| `404` | Server not found (`GET`, `PUT` or `DELETE /v1/servers/{id}`); `detail` is `server not found` |
-| `409` | Server `name` already taken (`POST /v1/servers`, or `PUT` renaming a server); `detail` names it, e.g. `server name "github" is already taken` |
+| `403` | `POST /bootstrap` once the registry has been bootstrapped (any token was ever created) |
+| `404` | Server not found (`GET`, `PUT` or `DELETE /v1/servers/{id}`); `detail` is `server not found`. Token not found (`DELETE /v1/tokens/{id}`); `detail` is `token not found` |
+| `409` | Server `name` already taken (`POST /v1/servers`, or `PUT` renaming a server); `detail` names it, e.g. `server name "github" is already taken`. Deleting the last remaining token (`DELETE /v1/tokens/{id}`); `detail` is `cannot delete the last token` |
 | `422` | Request body does not match the schema |
 | `500` | Unexpected database error |
 
@@ -71,8 +71,8 @@ Successful JSON responses also carry a `$schema` field with the URL of the respo
 | `delete-server` | `DELETE` | `/v1/servers/{id}` | yes | `204`, no body |
 | `list-tokens` | `GET` | `/v1/tokens` | yes | `200`, array of token metadata |
 | `create-token` | `POST` | `/v1/tokens` | yes | `200`, token with its secret value |
-| `delete-token` | `DELETE` | `/v1/tokens/{id}` | yes | `204`, no body |
-| `bootstrap` | `POST` | `/bootstrap` | no | `200`, first token with its secret value |
+| `delete-token` | `DELETE` | `/v1/tokens/{id}` | yes | `204`, no body; `404` unknown, `409` last token |
+| `bootstrap` | `POST` | `/bootstrap` | no | `200`, first token with its secret value; works once per database |
 
 The health check `GET /healthz` is public and returns `{"status":"ok"}`.
 
@@ -199,7 +199,13 @@ curl -X POST http://localhost:8080/v1/tokens \
 
 ### `DELETE /v1/tokens/{id}`
 
-Revoke a token by its `id` (not by name). Returns `204` also when nothing matched. You can revoke the token you are using; if it was the last one, `POST /bootstrap` works again.
+Revoke a token by its `id` (not by name). Returns `204` on success and `404` when no token matched. You can revoke the token you are using, as long as another token remains.
+
+The registry never deletes its last token: that request fails with `409` and the token keeps working. To rotate, create the new token first, then delete the old one.
+
+```json
+{"title": "Conflict", "status": 409, "detail": "cannot delete the last token"}
+```
 
 ## Bootstrap
 
@@ -213,8 +219,10 @@ curl -X POST http://localhost:8080/bootstrap \
   -d '{"name": "admin"}'
 ```
 
-The response has the same shape as `POST /v1/tokens`. While at least one token exists, the endpoint returns `403`:
+The response has the same shape as `POST /v1/tokens`. Bootstrap works once in the life of the database: as soon as any token has been created (by bootstrap, `POST /v1/tokens` or `registry token create`), the endpoint returns `403`, even if every token is deleted later:
 
 ```json
-{"title": "Forbidden", "status": 403, "detail": "bootstrap only available when no tokens exist"}
+{"title": "Forbidden", "status": 403, "detail": "registry already bootstrapped; create tokens with an existing token or the registry token create command"}
 ```
+
+If you lost every token, see [Recover access](/guides/self-hosting/#recover-access).
