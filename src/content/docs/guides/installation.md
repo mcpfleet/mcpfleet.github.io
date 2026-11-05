@@ -44,15 +44,7 @@ sudo mv mcpfleet /usr/local/bin/
 
 ## Setting Up the Registry
 
-```bash
-# Run locally
-git clone https://github.com/mcpfleet/mcpfleet-registry.git
-cd mcpfleet-registry
-go run ./cmd/registry
-
-# Or with Docker
-docker run -p 8080:8080 ghcr.io/mcpfleet/mcpfleet-registry:latest
-```
+The CLI stores and reads server definitions in a registry. To run your own with Docker Compose, Docker or Go, and to create its first token, follow [Self-Hosting the Registry](/guides/self-hosting/).
 
 ## Verify Installation
 
@@ -63,4 +55,5 @@ mcpfleet --version
 ## Next Steps
 
 - [Quick Start](/guides/quickstart)
+- [Self-Hosting the Registry](/guides/self-hosting/)
 - [CLI Reference](/reference/cli)
