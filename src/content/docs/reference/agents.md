@@ -29,7 +29,7 @@ Every adapter updates the file in place instead of replacing it:
 - **Invalid files are not touched.** If the file is not valid JSON, its root is not an object, or the servers key is not an object, `apply` fails with an error and writes nothing. Fix the file and run it again.
 - **Backup.** Before overwriting an existing file, mcpfleet copies it to `<file>.bak` (for example `~/.cursor/mcp.json.bak`). Each run replaces the previous backup.
 - **Atomic write.** The new content goes to a temporary file in the same directory and is then renamed over the original. If the file changes between reading and writing, `apply` stops with `… changed during apply; re-run apply`.
-- **Permissions and links.** An existing file keeps its permissions; a new file is created `0644` (`0600` for `claude-code`). A symlinked config file is followed and the link is kept.
+- **Permissions and links.** An existing file keeps its permissions, and so does its `.bak`. A new file is created `0600` for every agent, because it holds `env` values resolved from the vault; directories `apply` has to create for it get `0700`. A symlinked config file is followed and the link is kept.
 - **Nothing is removed.** `apply` only adds and updates entries. A server deleted from the registry, or left out by `--tag`, stays in the agent config until you remove it by hand.
 
 A missing file (or an empty one) is created, including its directory.
