@@ -9,7 +9,7 @@ sidebar:
 
 ## Prerequisites
 
-- Go 1.21+ (for building from source)
+- Go 1.23+ (for building from source)
 - OR use a pre-built binary from the Releases page
 
 ## Homebrew (macOS / Linux)
