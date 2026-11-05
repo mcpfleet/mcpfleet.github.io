@@ -1,0 +1,32 @@
+---
+title: mcpfleet
+description: Define your MCP servers once in a registry and apply them to every AI coding agent.
+template: splash
+hero:
+  tagline: Define your MCP servers once in a registry, then apply them to your AI coding agents with one command.
+  actions:
+    - text: Quick Start
+      link: /guides/quickstart/
+      icon: right-arrow
+      variant: primary
+    - text: Installation
+      link: /guides/installation/
+      variant: secondary
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid>
+  <Card title="One registry" icon="list-format">
+    Keep every MCP server definition in one place: your own registry, filled from a YAML file with `mcpfleet push`.
+  </Card>
+  <Card title="Every agent" icon="laptop">
+    Apply the same servers to each supported agent with `mcpfleet apply <agent>`, filtered by tag when you need only some.
+  </Card>
+  <Card title="Non-destructive merge" icon="approve-check">
+    `apply` adds or updates only the servers it manages and leaves the rest of the agent's config as it was, with a backup of the previous file.
+  </Card>
+  <Card title="Local secrets" icon="seti:lock">
+    Tokens stay in an encrypted vault on your machine. The registry holds only the secret names.
+  </Card>
+</CardGrid>
