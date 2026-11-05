@@ -17,6 +17,7 @@ export default defineConfig({
             { label: 'Introduction', slug: 'guides/introduction' },
             { label: 'Installation', slug: 'guides/installation' },
             { label: 'Quick Start', slug: 'guides/quickstart' },
+            { label: 'Self-Hosting the Registry', slug: 'guides/self-hosting' },
           ],
         },
         {
