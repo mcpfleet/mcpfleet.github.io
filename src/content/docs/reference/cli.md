@@ -18,7 +18,7 @@ Run `mcpfleet <command> --help` for the same information in your terminal.
 | Flag | Description |
 |------|-------------|
 | `-h, --help` | Show help for any command |
-| `-v, --verbose` | Enable verbose output (accepted by every command; it does not change the output yet) |
+| `-v, --verbose` | Print debug logs to stderr (for example, which registry `apply` uses and which config file it writes). Without it, commands print only warnings and errors to stderr; results go to stdout |
 | `--version` | Print the version, commit and build date, e.g. `mcpfleet version 0.1.0 (commit abc1234, built 2026-11-05T10:00:00Z)` |
 
 ## Registry and credentials
@@ -93,11 +93,20 @@ mcpfleet auth logout
 
 ### `mcpfleet auth status`
 
-Show whether a token is stored, with the token masked. This command only reads the local file and does not contact the registry.
+Show whether a token is stored, with the token masked, and the registry URL later commands use, with where it came from: `MCPFLEET_REGISTRY_URL`, `~/.config/mcpfleet/registry_url` or `default` (see [Registry and credentials](#registry-and-credentials)). The `Registry:` line is printed also when you are not logged in. This command only reads local files and environment and does not contact the registry.
 
 ```bash
 mcpfleet auth status
-# ✓ Logged in (token: mcp_********…beae)
+```
+
+```text
+✓ Logged in (token: mcp_************beae)
+Registry: https://registry.example.com (from MCPFLEET_REGISTRY_URL)
+```
+
+```text
+Not logged in.
+Registry: https://registry.mcpfleet.dev (from default)
 ```
 
 ---
@@ -128,15 +137,14 @@ An empty registry prints `No servers registered.`
 Write the registry's server definitions into one agent's config file.
 
 ```bash
-mcpfleet apply <agent> [--all] [--tag <tag>]...
+mcpfleet apply <agent> [--tag <tag>]...
 ```
 
 `<agent>` is exactly one of: `claude-code`, `claude-desktop`, `crush`, `cursor`, `windsurf`, `zed`. See [Agents](/reference/agents/) for the file each one writes and how the merge works.
 
 | Flag | Description |
 |------|-------------|
-| `--tag <tag>` | Apply only servers that have this tag. Repeat the flag (or pass a comma-separated list) to apply servers that have **any** of the tags |
-| `--all` | Apply all servers. This is also what happens without `--tag`, so the flag changes nothing today |
+| `--tag <tag>` | Apply only servers that have this tag. Repeat the flag (or pass a comma-separated list) to apply servers that have **any** of the tags. Without `--tag`, all servers are applied |
 
 Before writing, `env` entries that reference a secret (`{"secret": "<name>"}`) are replaced by the value stored under that name in the local vault (store it with [`mcpfleet secret set`](#mcpfleet-secret)). If a referenced secret is not in the vault, `apply` stops with an error that names every missing secret, with its server and variable, and writes nothing:
 
