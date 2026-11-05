@@ -12,7 +12,7 @@ sidebar:
 | Agent | Config file | Key |
 |-------|-------------|-----|
 | `claude-code` | `~/.claude.json`, or `$CLAUDE_CONFIG_DIR/.claude.json` when the variable is set | `mcpServers` |
-| `claude-desktop` | macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`<br>Windows: `%APPDATA%\Claude\claude_desktop_config.json`<br>Linux and others: `~/.claude/claude_desktop_config.json` | `mcpServers` |
+| `claude-desktop` | macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`<br>Windows: `%APPDATA%\Claude\claude_desktop_config.json`<br>Linux and others: `~/.config/Claude/claude_desktop_config.json`, or `$XDG_CONFIG_HOME/Claude/claude_desktop_config.json` when `XDG_CONFIG_HOME` is set | `mcpServers` |
 | `crush` | `$CRUSH_GLOBAL_CONFIG/crush.json`, else `$XDG_CONFIG_HOME/crush/crush.json`, else `~/.config/crush/crush.json` (also on Windows) | `mcp` |
 | `cursor` | `~/.cursor/mcp.json`<br>Windows: `%APPDATA%\Cursor\mcp.json` | `mcpServers` |
 | `windsurf` | `~/.codeium/windsurf/mcp_config.json` on every OS (on Windows `~` is `%USERPROFILE%`) | `mcpServers` |
@@ -93,6 +93,10 @@ Earlier versions of `mcpfleet apply claude-code` wrote to `claude_desktop_config
 ```
 
 Restart Claude Desktop to load the change.
+
+:::note[Changed: claude-desktop on Linux]
+Earlier versions wrote `~/.claude/claude_desktop_config.json` on Linux, which Claude Desktop does not read. Run `mcpfleet apply claude-desktop` again; the old file can be deleted.
+:::
 
 ### `cursor` and `windsurf`
 
