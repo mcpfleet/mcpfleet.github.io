@@ -114,10 +114,10 @@ mcpfleet list
 ```
 MCP Servers
 
-NAME        COMMAND  ARGS
-----        -------  ----
-fetch       uvx      mcp-server-fetch
-filesystem  npx      -y @modelcontextprotocol/server-filesystem /home/me/projects
+NAME        TRANSPORT  TARGET
+----        ---------  ------
+fetch       stdio      uvx mcp-server-fetch
+filesystem  stdio      npx -y @modelcontextprotocol/server-filesystem /home/me/projects
 ```
 
 ## 7. Store the Secret
