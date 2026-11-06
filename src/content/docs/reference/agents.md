@@ -38,7 +38,7 @@ A missing file (or an empty one) is created, including its directory.
 `env` entries that reference a secret are resolved from your local vault before writing, so the agent's config file contains the secret **value**. A secret missing from the vault stops `apply` with an error naming it, and nothing is written; store it with `mcpfleet secret set <name>`. Keep these files out of version control and shared folders.
 :::
 
-For a local (`stdio`) server, only `name`, `command`, `args` and `env` are written: the entry describes a process the agent starts. `args` and `env` are left out of an entry when the server has none. A remote server (`transport: http` or `sse`) gets the agent's remote entry instead, with its `url` and no `command`; see [Remote servers](#remote-servers). `install`, `tags` and `platforms` are never written to agent config files.
+For a local (`stdio`) server, only `name`, `command`, `args` and `env` are written: the entry describes a process the agent starts. `args` and `env` are left out of an entry when the server has none. A remote server (`transport: http` or `sse`) gets the agent's remote entry instead, with its `url`, its `headers` and no `command`; see [Remote servers](#remote-servers). `install`, `tags` and `platforms` are never written to agent config files.
 
 ## Entry format
 
@@ -153,14 +153,44 @@ Each agent gets the entry format its own config file uses for remote servers. Ag
 
 | Agent | `http` | `sse` | Format source |
 |-------|--------|-------|---------------|
-| `claude-code` | `{"type": "http", "url": …}` | `{"type": "sse", "url": …}` | [Claude Code MCP docs](https://code.claude.com/docs/en/mcp) |
+| `claude-code` | `{"type": "http", "url": …, "headers": …}` | `{"type": "sse", "url": …, "headers": …}` | [Claude Code MCP docs](https://code.claude.com/docs/en/mcp) (`claude mcp add --header`) |
 | `claude-desktop` | not supported | not supported | `claude_desktop_config.json` holds local servers only; add remote servers in Claude Desktop under **Settings → Connectors** |
-| `crush` | `{"type": "http", "url": …}` | `{"type": "sse", "url": …}` | [Crush config schema](https://github.com/charmbracelet/crush) (`type` is `stdio`, `sse` or `http`) |
-| `cursor` | `{"url": …}` | `{"url": …}` | [Cursor MCP docs](https://cursor.com/docs/context/mcp); Cursor picks Streamable HTTP or SSE itself |
-| `windsurf` | `{"serverUrl": …}` | `{"serverUrl": …}` | [Windsurf MCP docs](https://docs.windsurf.com/windsurf/cascade/mcp); Windsurf picks the transport from the server |
-| `zed` | `{"url": …}` | not supported | [Zed MCP docs](https://zed.dev/docs/ai/mcp); Zed has no SSE transport for context servers |
+| `crush` | `{"type": "http", "url": …, "headers": …}` | `{"type": "sse", "url": …, "headers": …}` | [Crush config schema](https://github.com/charmbracelet/crush) (`type` is `stdio`, `sse` or `http`; `headers` for `http` and `sse`) |
+| `cursor` | `{"url": …, "headers": …}` | `{"url": …, "headers": …}` | [Cursor MCP docs](https://cursor.com/docs/context/mcp); Cursor picks Streamable HTTP or SSE itself |
+| `windsurf` | `{"serverUrl": …, "headers": …}` | `{"serverUrl": …, "headers": …}` | [Windsurf MCP docs](https://docs.windsurf.com/windsurf/cascade/mcp); Windsurf picks the transport from the server |
+| `zed` | `{"url": …, "headers": …}` | not supported | [Zed MCP docs](https://zed.dev/docs/ai/mcp); Zed has no SSE transport for context servers |
 
-A remote entry carries only the address: no `command`, `args` or `env`. The agent connects to the server instead of starting a process, so a remote server's `env` is not written and its secrets are not read from the vault. Request headers are not part of the server definition; an agent that supports OAuth for remote servers (Claude Code, Crush, Zed) asks you to sign in on first use.
+A remote entry carries the address and the HTTP headers: no `command`, `args` or `env`. The agent connects to the server instead of starting a process, so a remote server's `env` is not written and its secrets are not read from the vault. `headers` is left out of the entry when the server has none.
+
+### Headers
+
+`headers` maps each HTTP header to a literal `value` or a `secret` from the local vault, like `env`. `apply` replaces every secret reference with its value before writing, so the agent's config file holds the token itself, in a file created with `0600` permissions. A referenced secret that is not in the vault stops `apply` with an error naming the server and the header, and nothing is written.
+
+```yaml
+name: remote-api
+transport: http
+url: https://example.com/mcp
+headers:
+  Authorization: {secret: example_auth}
+  X-Client: {value: mcpfleet}
+```
+
+The secret holds the whole header value, prefix included:
+
+```bash
+printf 'Bearer %s' "$TOKEN" | mcpfleet secret set example_auth --stdin
+```
+
+Header values are written as they are. Some agents expand variables in them, so a value containing `$` is interpreted by the agent:
+
+| Agent | Expanded in header values |
+|-------|---------------------------|
+| `claude-code` | `${VAR}` and `${VAR:-default}` |
+| `crush` | `$VAR` and `$(command)` (shell expansion) |
+| `cursor`, `windsurf` | `${env:NAME}` |
+| `zed` | nothing |
+
+Every agent that mcpfleet writes remote servers for reads `headers`. Without an `Authorization` header, an agent that supports OAuth for remote servers (Claude Code, Crush, Zed) asks you to sign in on first use; Zed starts its OAuth flow only when no `Authorization` header is configured.
 
 For the `linear` server above, `apply claude-code` writes
 
@@ -178,6 +208,20 @@ and `apply windsurf` writes
 {
   "mcpServers": {
     "linear": {"serverUrl": "https://mcp.linear.app/mcp"}
+  }
+}
+```
+
+For the `remote-api` server above, with `example_auth` set to `Bearer tok…`, `apply claude-code` writes
+
+```json
+{
+  "mcpServers": {
+    "remote-api": {
+      "type": "http",
+      "url": "https://example.com/mcp",
+      "headers": {"Authorization": "Bearer tok…", "X-Client": "mcpfleet"}
+    }
   }
 }
 ```

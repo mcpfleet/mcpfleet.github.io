@@ -94,6 +94,7 @@ The health check `GET /healthz` is public and returns `{"status":"ok"}`.
     "GITHUB_TOKEN": {"secret": "github_token"},
     "LOG_LEVEL": {"value": "debug"}
   },
+  "headers": {},
   "tags": ["dev", "vcs"],
   "platforms": ["linux", "darwin", "windows"],
   "created_at": "2026-11-05T09:56:17Z",
@@ -112,6 +113,7 @@ The health check `GET /healthz` is public and returns `{"status":"ok"}`.
 | `url` | string | required for `sse` and `http` | Address of a remote server, an absolute `http://` or `https://` URL. Must be empty for `stdio`; comes back as `""` for stdio servers. Stored as plain text: do not put tokens or passwords in it |
 | `args` | array of strings | optional | Command arguments |
 | `env` | object | optional | Variable name → `{"value": "<literal>"}` or `{"secret": "<vault key>"}`. A plain string is rejected with `422` |
+| `headers` | object | optional, `sse` and `http` only, see [header rules](#header-rules) | HTTP header name → `{"value": "<literal>"}` or `{"secret": "<vault key>"}`, sent by the agent to the remote server. Comes back as `{}` for a server without headers |
 | `tags` | array of strings | optional | Labels used by `mcpfleet apply --tag` |
 | `platforms` | array of strings | optional | `linux`, `darwin`, `windows` |
 | `created_at`, `updated_at` | string | read-only | UTC, `YYYY-MM-DDTHH:MM:SSZ` |
@@ -184,6 +186,34 @@ A registry older than the `url` field rejects a body with `url` as `unexpected p
 
 `{"secret": "..."}` is only a reference: the registry never stores secret values. `mcpfleet apply` resolves the reference from the local vault of the machine it runs on.
 
+### Header rules
+
+`headers` holds the HTTP headers of a remote server, for example an `Authorization` token. Each entry is a literal `{"value": "..."}` or a secret reference `{"secret": "<vault key>"}`, as in `env`. The secret holds the whole header value, prefix included (`Bearer <token>`); there is no template syntax. `POST` and `PUT` check:
+
+| `location` | `message` | When |
+|------------|-----------|------|
+| `body.headers` | `headers is only used for transport http or sse` | `headers` on a `stdio` server |
+| `body.headers.<Name>` | `header name must be an HTTP token` | the name is empty or has a character other than letters, digits and ``!#$%&'*+-.^_`\|~`` (RFC 9110 token) |
+| `body.headers.<Name>` | `duplicate header (case-insensitive): <name>` | two names differ only in case, e.g. `Authorization` and `authorization` |
+| `body.headers.<Name>` | `header needs exactly one of value or secret` | both or neither are set |
+| `body.headers.<Name>` | `header value must not contain CR, LF or NUL` | the `value` would split or end the header line |
+| `body.headers.<Name>` | `use {"secret": ...} for credential headers; the registry does not store secret values` | a literal `value` for `Authorization`, `Proxy-Authorization` or `Cookie` (any case) |
+
+Other headers may have a literal `value`, but any token or key belongs in a `secret`: literal values are stored as plain text. Header errors carry no `value` in the `422` response, so a rejected credential is not echoed back.
+
+```json
+{
+  "title": "Unprocessable Entity",
+  "status": 422,
+  "detail": "validation failed",
+  "errors": [
+    {"message": "use {\"secret\": ...} for credential headers; the registry does not store secret values", "location": "body.headers.Authorization"}
+  ]
+}
+```
+
+A registry older than the `headers` field rejects a body with `headers` as `unexpected property` at `body.headers`; update the registry to push servers with headers. Servers without headers still work with it, because the CLI leaves an empty `headers` out of the body.
+
 ### `GET /v1/servers`
 
 List all servers, sorted by name.
@@ -223,7 +253,15 @@ A remote server has a `url` instead of a `command`:
 curl -X POST http://localhost:8080/v1/servers \
   -H "Authorization: Bearer $MCPFLEET_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"name": "remote-api", "transport": "http", "url": "https://example.com/mcp"}'
+  -d '{
+    "name": "remote-api",
+    "transport": "http",
+    "url": "https://example.com/mcp",
+    "headers": {
+      "Authorization": {"secret": "example_auth"},
+      "X-Client": {"value": "mcpfleet"}
+    }
+  }'
 ```
 
 ### `PUT /v1/servers/{id}`
