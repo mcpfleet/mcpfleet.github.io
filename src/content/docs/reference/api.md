@@ -109,7 +109,7 @@ The health check `GET /healthz` is public and returns `{"status":"ok"}`.
 | `transport` | string | optional | `stdio`, `sse` or `http`; empty or omitted is stored as `stdio` |
 | `install` | object of strings | optional | How to install the runtime, e.g. `type`, `package`, `version` |
 | `command` | string | required for `stdio` | Command the agent starts. Must be empty for `sse` and `http` |
-| `url` | string | required for `sse` and `http` | Address of a remote server, an absolute `http://` or `https://` URL. Must be empty for `stdio`; comes back as `""` for stdio servers |
+| `url` | string | required for `sse` and `http` | Address of a remote server, an absolute `http://` or `https://` URL. Must be empty for `stdio`; comes back as `""` for stdio servers. Stored as plain text: do not put tokens or passwords in it |
 | `args` | array of strings | optional | Command arguments |
 | `env` | object | optional | Variable name → `{"value": "<literal>"}` or `{"secret": "<vault key>"}`. A plain string is rejected with `422` |
 | `tags` | array of strings | optional | Labels used by `mcpfleet apply --tag` |
