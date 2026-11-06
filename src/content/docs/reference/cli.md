@@ -154,6 +154,12 @@ Error: missing secrets in vault: github_token (server github, env GITHUB_TOKEN);
 
 If the vault cannot be opened (for example the OS keyring is locked), `apply` also stops before writing and shows the vault error. The vault is opened only when an applied server references a secret, so `apply` without secret references never asks for the keyring.
 
+Remote servers (`transport: http` or `sse`) are written in the format each agent reads. A server the agent's config file cannot hold (an `http` or `sse` server for `claude-desktop`, an `sse` server for `zed`), or a remote server without a `url`, is skipped with a warning on stderr; the other servers are still written and the `Applied` count leaves the skipped ones out. A skipped server's secrets are not read from the vault. See [Remote servers](/reference/agents/#remote-servers).
+
+```text
+warning: skipping linear: claude-desktop does not support http servers in its config file
+```
+
 ```bash
 mcpfleet apply cursor
 mcpfleet apply --tag dev cursor
