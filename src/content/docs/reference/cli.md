@@ -122,11 +122,14 @@ mcpfleet list
 ```text
 MCP Servers
 
-NAME        COMMAND  ARGS
-----        -------  ----
-filesystem  npx      -y @modelcontextprotocol/server-filesystem /home/me/projects
-github      npx      -y @modelcontextprotocol/server-github
+NAME        TRANSPORT  TARGET
+----        ---------  ------
+filesystem  stdio      npx -y @modelcontextprotocol/server-filesystem /home/me/projects
+github      stdio      npx -y @modelcontextprotocol/server-github
+remote-api  http       https://example.com/mcp
 ```
+
+`TRANSPORT` is `stdio`, `http` or `sse`; a server stored without a transport shows as `stdio`. `TARGET` is the command with its arguments for a `stdio` server and the `url` for an `http` or `sse` server. A server with no command or URL shows `-`.
 
 An empty registry prints `No servers registered.`
 
