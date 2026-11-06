@@ -15,22 +15,56 @@ sidebar:
 ## Homebrew (macOS / Linux)
 
 ```bash
-brew tap mcpfleet/tap
-brew install mcpfleet
+brew install mcpfleet/tap/mcpfleet
 ```
+
+The formula is a Homebrew cask in the [`mcpfleet/homebrew-tap`](https://github.com/mcpfleet/homebrew-tap) repository, updated on every release. The binaries are not signed or notarized yet; on macOS the cask removes the quarantine attribute so Gatekeeper does not block `mcpfleet`.
 
 ## Binary Download
 
-Download the latest release from the GitHub Releases page.
+Every [GitHub Release](https://github.com/mcpfleet/mcpfleet/releases) has an archive per platform, named `mcpfleet_<version>_<os>_<arch>.tar.gz` (`.zip` on Windows), where `<os>` is `linux`, `darwin` or `windows` and `<arch>` is `amd64` or `arm64`, plus `checksums.txt` with their SHA-256 sums. `<version>` is the release tag without the leading `v`: tag `v0.1.0` publishes `mcpfleet_0.1.0_linux_amd64.tar.gz`. Each archive holds the `mcpfleet` binary (`mcpfleet.exe` on Windows), `LICENSE` and `README.md`.
+
+### Linux / macOS
+
+Set `VERSION` to the latest version from the [Releases page](https://github.com/mcpfleet/mcpfleet/releases), and `OS` and `ARCH` to your platform:
 
 ```bash
-# macOS (Apple Silicon)
-curl -Lo mcpfleet https://github.com/mcpfleet/mcpfleet/releases/latest/download/mcpfleet_darwin_arm64
-chmod +x mcpfleet && sudo mv mcpfleet /usr/local/bin/
+VERSION=0.1.0          # latest version from the Releases page
+OS=linux ARCH=amd64    # macOS on Apple Silicon: OS=darwin ARCH=arm64
+FILE="mcpfleet_${VERSION}_${OS}_${ARCH}.tar.gz"
+curl -fsSLO "https://github.com/mcpfleet/mcpfleet/releases/download/v${VERSION}/${FILE}"
+curl -fsSLO "https://github.com/mcpfleet/mcpfleet/releases/download/v${VERSION}/checksums.txt"
+grep " ${FILE}\$" checksums.txt | sha256sum -c -
+```
 
-# Linux (amd64)
-curl -Lo mcpfleet https://github.com/mcpfleet/mcpfleet/releases/latest/download/mcpfleet_linux_amd64
-chmod +x mcpfleet && sudo mv mcpfleet /usr/local/bin/
+On macOS, where `sha256sum` may be missing, verify with `shasum` instead:
+
+```bash
+grep " ${FILE}\$" checksums.txt | shasum -a 256 -c -
+```
+
+The check prints `mcpfleet_<version>_<os>_<arch>.tar.gz: OK`. Anything else means the download is broken: do not install it. Once it says `OK`, unpack the binary and install it:
+
+```bash
+tar -xzf "${FILE}" mcpfleet
+sudo install mcpfleet /usr/local/bin/
+```
+
+### Windows (PowerShell)
+
+```powershell
+$Version = "0.1.0"    # latest version from the Releases page
+$File = "mcpfleet_${Version}_windows_amd64.zip"    # ARM: windows_arm64
+Invoke-WebRequest "https://github.com/mcpfleet/mcpfleet/releases/download/v$Version/$File" -OutFile $File
+Invoke-WebRequest "https://github.com/mcpfleet/mcpfleet/releases/download/v$Version/checksums.txt" -OutFile checksums.txt
+$expected = ((Select-String -Path checksums.txt -Pattern " $File$").Line -split '\s+')[0]
+if ((Get-FileHash $File -Algorithm SHA256).Hash -eq $expected) { "${File}: OK" } else { "${File}: checksum mismatch, do not install" }
+```
+
+Once it says `OK`, unpack the archive and add the `mcpfleet` folder to your `PATH`:
+
+```powershell
+Expand-Archive $File -DestinationPath mcpfleet
 ```
 
 ## Build from Source
