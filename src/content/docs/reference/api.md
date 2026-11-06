@@ -55,7 +55,7 @@ Errors use `application/problem+json`:
 | `403` | `POST /bootstrap` once the registry has been bootstrapped (any token was ever created) |
 | `404` | Server not found (`GET`, `PUT` or `DELETE /v1/servers/{id}`); `detail` is `server not found`. Token not found (`DELETE /v1/tokens/{id}`); `detail` is `token not found` |
 | `409` | Server `name` already taken (`POST /v1/servers`, or `PUT` renaming a server); `detail` names it, e.g. `server name "github" is already taken`. Deleting the last remaining token (`DELETE /v1/tokens/{id}`); `detail` is `cannot delete the last token` |
-| `422` | Request body does not match the schema, has a key the API does not know (`unexpected property`), or breaks the [transport rules](#transport-rules); `errors[]` names each problem with its `location` and `message` |
+| `422` | Request body does not match the schema, has a key the API does not know (`unexpected property`), or breaks the [name rules](#name-rules) or the [transport rules](#transport-rules); `errors[]` names each problem with its `location` and `message` |
 | `500` | Unexpected database error |
 
 Successful JSON responses also carry a `$schema` field with the URL of the response's JSON Schema; clients can ignore it.
@@ -104,7 +104,7 @@ The health check `GET /healthz` is public and returns `{"status":"ok"}`.
 | Field | Type | Request | Description |
 |-------|------|---------|-------------|
 | `id` | string | read-only | Generated on create |
-| `name` | string | **required**, non-empty | Unique server name |
+| `name` | string | **required**, see [name rules](#name-rules) | Unique server name |
 | `description` | string | optional | Free text |
 | `transport` | string | optional | `stdio`, `sse` or `http`; empty or omitted is stored as `stdio` |
 | `install` | object of strings | optional | How to install the runtime, e.g. `type`, `package`, `version` |
@@ -117,6 +117,33 @@ The health check `GET /healthz` is public and returns `{"status":"ok"}`.
 | `created_at`, `updated_at` | string | read-only | UTC, `YYYY-MM-DDTHH:MM:SSZ` |
 
 Responses always contain every field; empty collections come back as `{}` or `[]`.
+
+### Name rules
+
+A server is addressed by its name in `/v1/servers/{id}`, so the name has to work as one path segment. `POST` and `PUT` (including a rename) reject a `name` that is:
+
+| Name | `message` at `body.name` |
+|------|--------------------------|
+| `.` or `..` | `name must not be "." or ".."` |
+| empty or only whitespace | `name must not be empty or only whitespace` |
+| contains a control character (U+0000–U+001F, U+007F, U+0080–U+009F) | `name must not contain control characters (found U+000A at byte 1)` |
+
+`.` and `..` are dot segments: curl, browsers and reverse proxies remove them from a path before it reaches the registry, so such a server could not be read, updated or deleted. The control character message names the first such character by its code point and byte offset, because it is invisible in the JSON `value`. An empty name also gets the schema error `expected length >= 1`.
+
+Names that only look similar stay valid, for example `.a`, `a..b`, `...`, `a/b` (sent as `a%2Fb` in the path) and names with non-ASCII letters. Leading or trailing spaces are kept as part of the name.
+
+```json
+{
+  "title": "Unprocessable Entity",
+  "status": 422,
+  "detail": "validation failed",
+  "errors": [
+    {"message": "name must not be \".\" or \"..\"", "location": "body.name", "value": ".."}
+  ]
+}
+```
+
+The rules apply when a server is written. A server stored under such a name by an older registry can no longer be updated with `PUT`; delete it (`DELETE /v1/servers/{id}` with a client that sends the path as is, e.g. `curl --path-as-is`) and create it again under a new name.
 
 ### Transport rules
 
