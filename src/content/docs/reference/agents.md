@@ -127,15 +127,15 @@ mcpfleet writes Crush's global config, `crush.json`, under the `mcp` key, and ev
   "theme": "One Dark",
   "context_servers": {
     "github": {
-      "command": {
-        "path": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-github"],
-        "env": {"GITHUB_TOKEN": "ghp_…"}
-      }
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {"GITHUB_TOKEN": "ghp_…"}
     }
   }
 }
 ```
+
+This is the flat format of the [Zed MCP docs](https://zed.dev/docs/ai/mcp): `command` is the executable, with `args` and `env` beside it. Older Zed settings nest them as `"command": {"path": …, "args": …, "env": …}`; Zed rewrites such entries to the flat format itself. mcpfleet reads both formats, and an entry it applies replaces an old nested one under the same name with the flat format.
 
 Zed's `settings.json` may contain comments and trailing commas. mcpfleet edits it on its syntax tree, so comments, formatting and every other setting survive; only the applied entries under `context_servers` change, indented like the rest of the file.
 
