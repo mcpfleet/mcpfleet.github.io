@@ -20,6 +20,35 @@ brew install mcpfleet/tap/mcpfleet
 
 The formula is a Homebrew cask in the [`mcpfleet/homebrew-tap`](https://github.com/mcpfleet/homebrew-tap) repository, updated on every release. The binaries are not signed or notarized yet; on macOS the cask removes the quarantine attribute so Gatekeeper does not block `mcpfleet`.
 
+## Install script (Linux / macOS)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mcpfleet/mcpfleet/main/install.sh | sh
+```
+
+The script picks the archive for your OS (`linux` or `darwin`) and architecture (`amd64` or `arm64`) from the latest [GitHub Release](https://github.com/mcpfleet/mcpfleet/releases), checks it against the release's `checksums.txt` and installs `mcpfleet` to `/usr/local/bin` when that directory is writable, otherwise to `~/.local/bin`. It never calls `sudo`, and if the checksum does not match it stops before installing anything. When the target directory is not on your `PATH`, it prints the line to add.
+
+Two environment variables change what it does:
+
+| Variable | Default | Effect |
+|----------|---------|--------|
+| `MCPFLEET_VERSION` | latest release | version to install, e.g. `0.1.0` or `v0.1.0` |
+| `MCPFLEET_INSTALL_DIR` | `/usr/local/bin` if writable, else `~/.local/bin` | directory the binary goes to |
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mcpfleet/mcpfleet/main/install.sh | MCPFLEET_VERSION=0.1.0 MCPFLEET_INSTALL_DIR="$HOME/bin" sh
+```
+
+The script installs released versions only, so it works once the first release is published; until then it stops with `no mcpfleet release found` and installs nothing. Use [Build from Source](#build-from-source) in the meantime. On Windows, follow [Windows (PowerShell)](#windows-powershell) below.
+
+To read the script before running it, download it first:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/mcpfleet/mcpfleet/main/install.sh
+less install.sh
+sh install.sh
+```
+
 ## Binary Download
 
 Every [GitHub Release](https://github.com/mcpfleet/mcpfleet/releases) has an archive per platform, named `mcpfleet_<version>_<os>_<arch>.tar.gz` (`.zip` on Windows), where `<os>` is `linux`, `darwin` or `windows` and `<arch>` is `amd64` or `arm64`, plus `checksums.txt` with their SHA-256 sums. `<version>` is the release tag without the leading `v`: tag `v0.1.0` publishes `mcpfleet_0.1.0_linux_amd64.tar.gz`. Each archive holds the `mcpfleet` binary (`mcpfleet.exe` on Windows), `LICENSE` and `README.md`.
