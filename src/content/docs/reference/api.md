@@ -199,7 +199,7 @@ A registry older than the `url` field rejects a body with `url` as `unexpected p
 | `body.headers.<Name>` | `header value must not contain CR, LF or NUL` | the `value` would split or end the header line |
 | `body.headers.<Name>` | `use {"secret": ...} for credential headers; the registry does not store secret values` | a literal `value` for `Authorization`, `Proxy-Authorization` or `Cookie` (any case) |
 
-Other headers may have a literal `value`, but any token or key belongs in a `secret`: literal values are stored as plain text. Header errors carry no `value` in the `422` response, so a rejected credential is not echoed back.
+Other headers may have a literal `value`, but any token or key belongs in a `secret`: literal values are stored as plain text. The errors of these rules carry no `value` in the `422` response, so a rejected credential is not echoed back. A header entry that is not an object (`"Authorization": "Bearer …"`) fails the schema check first, with `expected object`, and that error does include the value.
 
 ```json
 {

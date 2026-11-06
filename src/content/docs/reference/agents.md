@@ -188,7 +188,7 @@ Header values are written as they are. Some agents expand variables in them, so 
 | `claude-code` | `${VAR}` and `${VAR:-default}` |
 | `crush` | `$VAR` and `$(command)` (shell expansion) |
 | `cursor`, `windsurf` | `${env:NAME}` |
-| `zed` | nothing |
+| `zed` | not documented |
 
 Every agent that mcpfleet writes remote servers for reads `headers`. Without an `Authorization` header, an agent that supports OAuth for remote servers (Claude Code, Crush, Zed) asks you to sign in on first use; Zed starts its OAuth flow only when no `Authorization` header is configured.
 
