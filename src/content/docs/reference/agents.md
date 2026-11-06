@@ -38,7 +38,7 @@ A missing file (or an empty one) is created, including its directory.
 `env` entries that reference a secret are resolved from your local vault before writing, so the agent's config file contains the secret **value**. A secret missing from the vault stops `apply` with an error naming it, and nothing is written; store it with `mcpfleet secret set <name>`. Keep these files out of version control and shared folders.
 :::
 
-Only `name`, `command`, `args` and `env` of a server are written. Every entry describes a local process the agent starts (stdio); `transport`, `install`, `tags` and `platforms` are not written to agent config files. `args` and `env` are left out of an entry when the server has none.
+For a local (`stdio`) server, only `name`, `command`, `args` and `env` are written: the entry describes a process the agent starts. `args` and `env` are left out of an entry when the server has none. A remote server (`transport: http` or `sse`) gets the agent's remote entry instead, with its `url` and no `command`; see [Remote servers](#remote-servers). `install`, `tags` and `platforms` are never written to agent config files.
 
 ## Entry format
 
@@ -138,3 +138,59 @@ mcpfleet writes Crush's global config, `crush.json`, under the `mcp` key, and ev
 ```
 
 Zed's `settings.json` may contain comments and trailing commas. mcpfleet edits it on its syntax tree, so comments, formatting and every other setting survive; only the applied entries under `context_servers` change, indented like the rest of the file.
+
+## Remote servers
+
+A remote server is one stored with `transport: http` or `transport: sse` and a `url`, for example
+
+```yaml
+name: linear
+transport: http
+url: https://mcp.linear.app/mcp
+```
+
+Each agent gets the entry format its own config file uses for remote servers. Agents whose config file cannot hold that transport skip the server:
+
+| Agent | `http` | `sse` | Format source |
+|-------|--------|-------|---------------|
+| `claude-code` | `{"type": "http", "url": …}` | `{"type": "sse", "url": …}` | [Claude Code MCP docs](https://code.claude.com/docs/en/mcp) |
+| `claude-desktop` | not supported | not supported | `claude_desktop_config.json` holds local servers only; add remote servers in Claude Desktop under **Settings → Connectors** |
+| `crush` | `{"type": "http", "url": …}` | `{"type": "sse", "url": …}` | [Crush config schema](https://github.com/charmbracelet/crush) (`type` is `stdio`, `sse` or `http`) |
+| `cursor` | `{"url": …}` | `{"url": …}` | [Cursor MCP docs](https://cursor.com/docs/context/mcp); Cursor picks Streamable HTTP or SSE itself |
+| `windsurf` | `{"serverUrl": …}` | `{"serverUrl": …}` | [Windsurf MCP docs](https://docs.windsurf.com/windsurf/cascade/mcp); Windsurf picks the transport from the server |
+| `zed` | `{"url": …}` | not supported | [Zed MCP docs](https://zed.dev/docs/ai/mcp); Zed has no SSE transport for context servers |
+
+A remote entry carries only the address: no `command`, `args` or `env`. The agent connects to the server instead of starting a process, so a remote server's `env` is not written and its secrets are not read from the vault. Request headers are not part of the server definition; an agent that supports OAuth for remote servers (Claude Code, Crush, Zed) asks you to sign in on first use.
+
+For the `linear` server above, `apply claude-code` writes
+
+```json
+{
+  "mcpServers": {
+    "linear": {"type": "http", "url": "https://mcp.linear.app/mcp"}
+  }
+}
+```
+
+and `apply windsurf` writes
+
+```json
+{
+  "mcpServers": {
+    "linear": {"serverUrl": "https://mcp.linear.app/mcp"}
+  }
+}
+```
+
+When an agent does not support a server's transport, or a remote server has no `url`, `apply` leaves that server out, prints a warning on stderr and writes the rest:
+
+```text
+warning: skipping linear: claude-desktop does not support http servers in its config file
+✓ Applied 2 MCP server(s) to claude-desktop
+```
+
+The count covers only the servers written. When every server is skipped, the config file is not touched.
+
+:::note[Windsurf on Teams and Enterprise plans]
+An admin may have to allow remote MCP transports for the team before Windsurf connects to a remote server.
+:::
