@@ -55,7 +55,7 @@ Errors use `application/problem+json`:
 | `403` | `POST /bootstrap` once the registry has been bootstrapped (any token was ever created) |
 | `404` | Server not found (`GET`, `PUT` or `DELETE /v1/servers/{id}`); `detail` is `server not found`. Token not found (`DELETE /v1/tokens/{id}`); `detail` is `token not found` |
 | `409` | Server `name` already taken (`POST /v1/servers`, or `PUT` renaming a server); `detail` names it, e.g. `server name "github" is already taken`. Deleting the last remaining token (`DELETE /v1/tokens/{id}`); `detail` is `cannot delete the last token` |
-| `422` | Request body does not match the schema |
+| `422` | Request body does not match the schema, has a key the API does not know (`unexpected property`), or breaks the [transport rules](#transport-rules); `errors[]` names each problem with its `location` and `message` |
 | `500` | Unexpected database error |
 
 Successful JSON responses also carry a `$schema` field with the URL of the response's JSON Schema; clients can ignore it.
@@ -88,6 +88,7 @@ The health check `GET /healthz` is public and returns `{"status":"ok"}`.
   "transport": "stdio",
   "install": {"type": "npx", "package": "@modelcontextprotocol/server-github"},
   "command": "npx",
+  "url": "",
   "args": ["-y", "@modelcontextprotocol/server-github"],
   "env": {
     "GITHUB_TOKEN": {"secret": "github_token"},
@@ -107,7 +108,8 @@ The health check `GET /healthz` is public and returns `{"status":"ok"}`.
 | `description` | string | optional | Free text |
 | `transport` | string | optional | `stdio`, `sse` or `http`; empty or omitted is stored as `stdio` |
 | `install` | object of strings | optional | How to install the runtime, e.g. `type`, `package`, `version` |
-| `command` | string | optional | Command the agent starts |
+| `command` | string | required for `stdio` | Command the agent starts. Must be empty for `sse` and `http` |
+| `url` | string | required for `sse` and `http` | Address of a remote server, an absolute `http://` or `https://` URL. Must be empty for `stdio`; comes back as `""` for stdio servers |
 | `args` | array of strings | optional | Command arguments |
 | `env` | object | optional | Variable name → `{"value": "<literal>"}` or `{"secret": "<vault key>"}`. A plain string is rejected with `422` |
 | `tags` | array of strings | optional | Labels used by `mcpfleet apply --tag` |
@@ -115,6 +117,43 @@ The health check `GET /healthz` is public and returns `{"status":"ok"}`.
 | `created_at`, `updated_at` | string | read-only | UTC, `YYYY-MM-DDTHH:MM:SSZ` |
 
 Responses always contain every field; empty collections come back as `{}` or `[]`.
+
+### Transport rules
+
+`transport` decides whether a server runs locally or is reached over the network, and so which of `command` and `url` it needs. `POST` and `PUT` check:
+
+| `transport` | `command` | `url` |
+|-------------|-----------|-------|
+| `stdio`, empty or omitted | required | must be empty |
+| `sse`, `http` | must be empty | required, absolute `http://` or `https://` URL |
+| anything else | — | — (rejected: `transport must be stdio, sse or http`) |
+
+A body that breaks a rule gets `422` with one `errors[]` entry per problem, all reported at once:
+
+```json
+{
+  "title": "Unprocessable Entity",
+  "status": 422,
+  "detail": "validation failed",
+  "errors": [
+    {"message": "command is required for transport stdio", "location": "body.command", "value": ""},
+    {"message": "url is only used for transport http or sse", "location": "body.url", "value": "https://example.com/mcp"}
+  ]
+}
+```
+
+| `location` | `message` |
+|------------|-----------|
+| `body.command` | `command is required for transport stdio` |
+| `body.command` | `command is not used for transport http; remove it` (or `sse`) |
+| `body.url` | `url is required for transport http` (or `sse`) |
+| `body.url` | `url must be an absolute http or https URL` |
+| `body.url` | `url is only used for transport http or sse` |
+| `body.transport` | `transport must be stdio, sse or http` |
+
+The rules apply when a server is written, not when it is read. A stdio server stored without a `command` by an older registry still lists and pulls as before, but replacing it with `PUT` (or `mcpfleet push`) needs a `command` now.
+
+A registry older than the `url` field rejects a body with `url` as `unexpected property` at `body.url`; update the registry to push remote servers.
 
 `{"secret": "..."}` is only a reference: the registry never stores secret values. `mcpfleet apply` resolves the reference from the local vault of the machine it runs on.
 
@@ -136,7 +175,7 @@ curl http://localhost:8080/v1/servers/github -H "Authorization: Bearer $MCPFLEET
 
 ### `POST /v1/servers`
 
-Create a server. Only `name` is required. A name that already exists fails with `409`.
+Create a server. `name` is required, and a `command` or a `url` as the [transport rules](#transport-rules) say. A name that already exists fails with `409`.
 
 ```bash
 curl -X POST http://localhost:8080/v1/servers \
@@ -149,6 +188,15 @@ curl -X POST http://localhost:8080/v1/servers \
     "env": {"GITHUB_TOKEN": {"secret": "github_token"}},
     "tags": ["dev", "vcs"]
   }'
+```
+
+A remote server has a `url` instead of a `command`:
+
+```bash
+curl -X POST http://localhost:8080/v1/servers \
+  -H "Authorization: Bearer $MCPFLEET_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "remote-api", "transport": "http", "url": "https://example.com/mcp"}'
 ```
 
 ### `PUT /v1/servers/{id}`

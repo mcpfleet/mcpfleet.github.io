@@ -192,6 +192,10 @@ The file is a YAML **list** of servers (the same format `pull` writes):
     LOG_LEVEL:
       value: debug
   tags: [dev, vcs]
+- name: remote-api
+  description: Remote MCP server over HTTP
+  transport: http
+  url: https://example.com/mcp
 ```
 
 | Field | Description |
@@ -200,7 +204,8 @@ The file is a YAML **list** of servers (the same format `pull` writes):
 | `description` | Free text |
 | `transport` | `stdio`, `sse` or `http`; the registry stores `stdio` when empty |
 | `install` | `type` (`npx`, `uvx`, `docker`, `binary`, `go`), `package`, `version` |
-| `command`, `args` | The command the agent starts |
+| `command`, `args` | The command the agent starts; `command` is required for `stdio` and must be left out for `sse` and `http` |
+| `url` | Address of a remote server, an absolute `http://` or `https://` URL; required for `sse` and `http`, left out for `stdio` |
 | `env` | Map of variable name to `{value: ...}` or `{secret: ...}` |
 | `tags` | Labels used by `apply --tag` |
 | `platforms` | `linux`, `darwin`, `windows` |
@@ -211,6 +216,14 @@ For each server, `push` looks the name up in the registry: an existing server is
 created  filesystem
 updated  github
 ```
+
+The registry checks each server before storing it ([transport rules](/reference/api/#transport-rules)). A server that breaks a rule stops the push with the field and the reason, e.g.:
+
+```text
+Error: create server "remote-api": registry: unexpected status 422: validation failed: body.url: url is required for transport sse
+```
+
+Servers earlier in the file are already stored at that point; fix the file and run `push` again.
 
 ---
 
