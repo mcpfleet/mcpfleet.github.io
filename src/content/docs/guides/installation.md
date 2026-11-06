@@ -35,14 +35,19 @@ FILE="mcpfleet_${VERSION}_${OS}_${ARCH}.tar.gz"
 curl -fsSLO "https://github.com/mcpfleet/mcpfleet/releases/download/v${VERSION}/${FILE}"
 curl -fsSLO "https://github.com/mcpfleet/mcpfleet/releases/download/v${VERSION}/checksums.txt"
 grep " ${FILE}\$" checksums.txt | sha256sum -c -
-tar -xzf "${FILE}" mcpfleet
-sudo install mcpfleet /usr/local/bin/
 ```
 
-The checksum line prints `mcpfleet_<version>_<os>_<arch>.tar.gz: OK`; anything else means the download is broken, so do not install it. On macOS, where `sha256sum` may be missing, verify with:
+On macOS, where `sha256sum` may be missing, verify with `shasum` instead:
 
 ```bash
 grep " ${FILE}\$" checksums.txt | shasum -a 256 -c -
+```
+
+The check prints `mcpfleet_<version>_<os>_<arch>.tar.gz: OK`. Anything else means the download is broken: do not install it. Once it says `OK`, unpack the binary and install it:
+
+```bash
+tar -xzf "${FILE}" mcpfleet
+sudo install mcpfleet /usr/local/bin/
 ```
 
 ### Windows (PowerShell)
@@ -53,11 +58,14 @@ $File = "mcpfleet_${Version}_windows_amd64.zip"    # ARM: windows_arm64
 Invoke-WebRequest "https://github.com/mcpfleet/mcpfleet/releases/download/v$Version/$File" -OutFile $File
 Invoke-WebRequest "https://github.com/mcpfleet/mcpfleet/releases/download/v$Version/checksums.txt" -OutFile checksums.txt
 $expected = ((Select-String -Path checksums.txt -Pattern " $File$").Line -split '\s+')[0]
-if ((Get-FileHash $File -Algorithm SHA256).Hash -ne $expected) { throw "checksum mismatch" }
-Expand-Archive $File -DestinationPath mcpfleet
+if ((Get-FileHash $File -Algorithm SHA256).Hash -eq $expected) { "${File}: OK" } else { "${File}: checksum mismatch, do not install" }
 ```
 
-Then add the `mcpfleet` folder to your `PATH`.
+Once it says `OK`, unpack the archive and add the `mcpfleet` folder to your `PATH`:
+
+```powershell
+Expand-Archive $File -DestinationPath mcpfleet
+```
 
 ## Build from Source
 
