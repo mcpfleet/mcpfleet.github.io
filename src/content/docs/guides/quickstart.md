@@ -90,7 +90,7 @@ Describe your MCP servers in a YAML file. The file is a list of server definitio
   tags: [web]
 ```
 
-Only `name` is required. `env` maps each variable to an object with either a `value` (a literal) or a `secret` (the name of a secret in your local mcpfleet vault, resolved when you apply).
+Each server needs a `name` and, for a local `stdio` server like these, a `command`; a remote `sse` or `http` server has a `url` instead (see [`mcpfleet push`](/reference/cli/#mcpfleet-push)). `env` maps each variable to an object with either a `value` (a literal) or a `secret` (the name of a secret in your local mcpfleet vault, resolved when you apply).
 
 ## 5. Push Them to the Registry
 
