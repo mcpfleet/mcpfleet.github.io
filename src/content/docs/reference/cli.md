@@ -29,7 +29,7 @@ Every command that talks to the registry (`list`, `apply`, `push`, `pull`, `dele
 |------|---------------------|
 | Registry URL | 1. `MCPFLEET_REGISTRY_URL` environment variable<br>2. `~/.config/mcpfleet/registry_url` (written by `auth login --url`)<br>3. Default: `https://registry.mcpfleet.dev` |
 | Auth token | `~/.config/mcpfleet/token` (written by `auth login`, file mode `0600`) |
-| Secrets for `env` values | `~/.config/mcpfleet/vault.enc`, encrypted with a key kept in the OS keyring |
+| Secrets for `env` and `headers` values | `~/.config/mcpfleet/vault.enc`, encrypted with a key kept in the OS keyring |
 
 A trailing `/` on the registry URL is ignored. Without a stored token `list`, `push`, `pull` and `delete` fail with `Error: registry client: registry: not authenticated — run 'mcpfleet auth login' first`, and `apply` fails with `Error: registry: not authenticated — run 'mcpfleet auth login' first`.
 
@@ -149,11 +149,13 @@ mcpfleet apply <agent> [--tag <tag>]...
 |------|-------------|
 | `--tag <tag>` | Apply only servers that have this tag. Repeat the flag (or pass a comma-separated list) to apply servers that have **any** of the tags. Without `--tag`, all servers are applied |
 
-Before writing, `env` entries that reference a secret (`{"secret": "<name>"}`) are replaced by the value stored under that name in the local vault (store it with [`mcpfleet secret set`](#mcpfleet-secret)). If a referenced secret is not in the vault, `apply` stops with an error that names every missing secret, with its server and variable, and writes nothing:
+Before writing, `env` entries of a local server and `headers` entries of a remote server that reference a secret (`{"secret": "<name>"}`) are replaced by the value stored under that name in the local vault (store it with [`mcpfleet secret set`](#mcpfleet-secret)). If a referenced secret is not in the vault, `apply` stops with an error that names every missing secret, with its server and variable or header, and writes nothing:
 
 ```text
-Error: missing secrets in vault: github_token (server github, env GITHUB_TOKEN); set them with: mcpfleet secret set <name>
+Error: missing secrets in vault: github_token (server github, env GITHUB_TOKEN), example_auth (server remote-api, header Authorization); set them with: mcpfleet secret set <name>
 ```
+
+The `env` of a remote server is not written to any agent, so its secrets are not read.
 
 If the vault cannot be opened (for example the OS keyring is locked), `apply` also stops before writing and shows the vault error. The vault is opened only when an applied server references a secret, so `apply` without secret references never asks for the keyring.
 
@@ -205,6 +207,9 @@ The file is a YAML **list** of servers (the same format `pull` writes):
   description: Remote MCP server over HTTP
   transport: http
   url: https://example.com/mcp
+  headers:
+    Authorization:
+      secret: example_auth   # the whole value, e.g. "Bearer <token>"
 ```
 
 | Field | Description |
@@ -216,6 +221,7 @@ The file is a YAML **list** of servers (the same format `pull` writes):
 | `command`, `args` | The command the agent starts; `command` is required for `stdio` and must be left out for `sse` and `http` |
 | `url` | Address of a remote server, an absolute `http://` or `https://` URL; required for `sse` and `http`, left out for `stdio` |
 | `env` | Map of variable name to `{value: ...}` or `{secret: ...}` |
+| `headers` | `sse` and `http` only: map of HTTP header name to `{value: ...}` or `{secret: ...}`. `Authorization`, `Proxy-Authorization` and `Cookie` need a `secret` (see [header rules](/reference/api/#header-rules)) |
 | `tags` | Labels used by `apply --tag` |
 | `platforms` | `linux`, `darwin`, `windows` |
 
@@ -226,10 +232,11 @@ created  filesystem
 updated  github
 ```
 
-The registry checks each server before storing it ([transport rules](/reference/api/#transport-rules)). A server that breaks a rule stops the push with the field and the reason, e.g.:
+The registry checks each server before storing it ([transport rules](/reference/api/#transport-rules), [header rules](/reference/api/#header-rules)). A server that breaks a rule stops the push with the field and the reason, e.g.:
 
 ```text
 Error: create server "remote-api": registry: unexpected status 422: validation failed: body.url: url is required for transport sse
+Error: create server "remote-api": registry: unexpected status 422: validation failed: body.headers.Authorization: use {"secret": ...} for credential headers; the registry does not store secret values
 ```
 
 Servers earlier in the file are already stored at that point; fix the file and run `push` again.
