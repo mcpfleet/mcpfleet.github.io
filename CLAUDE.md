@@ -11,7 +11,9 @@ npm run build      # production build into dist/
 npm run preview    # serve the built dist/ locally
 ```
 
-Deploy (`.github/workflows/deploy.yml`) runs `npm ci` and `npm run build` on Node 20 on every push to `main` and publishes `dist/` to GitHub Pages. There is no CI on pull requests: run `npm run build` locally before merging.
+Use Node 22 (`.nvmrc`; `nvm use` picks it up, `engines` requires >=22.23.4 as astro 7 does).
+
+Deploy (`.github/workflows/deploy.yml`) runs on Node from `.nvmrc` on every push to `main`, on manual dispatch and daily: `npm ci`, then `npm audit --omit=dev --audit-level=high`, then `npm run build`, and publishes `dist/` to GitHub Pages. A high or critical advisory fails push and manual deploys; the daily run only reports it, so `install.sh` keeps being republished. There is no CI on pull requests: run `npm audit --omit=dev --audit-level=high` and `npm run build` locally before merging.
 
 Add or upgrade a dependency with `npm install <package>` and commit the updated `package-lock.json` with it; `npm ci` fails when the lockfile and `package.json` disagree.
 

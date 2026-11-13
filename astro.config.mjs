@@ -7,9 +7,9 @@ export default defineConfig({
     starlight({
       title: 'mcpfleet',
       description: 'Vendor-agnostic MCP server manager — manage your AI tools like a fleet',
-      social: {
-        github: 'https://github.com/mcpfleet/mcpfleet',
-      },
+      social: [
+        { icon: 'github', label: 'GitHub', href: 'https://github.com/mcpfleet/mcpfleet' },
+      ],
       sidebar: [
         {
           label: 'Getting Started',
