@@ -235,8 +235,8 @@ updated  github
 The registry checks each server before storing it ([transport rules](/reference/api/#transport-rules), [header rules](/reference/api/#header-rules)). A server that breaks a rule stops the push with the field and the reason, e.g.:
 
 ```text
-Error: create server "remote-api": registry: unexpected status 422: validation failed: body.url: url is required for transport sse
-Error: create server "remote-api": registry: unexpected status 422: validation failed: body.headers.Authorization: use {"secret": ...} for credential headers; the registry does not store secret values
+Error: create server "remote-api": registry: validation failed: body.url: url is required for transport sse
+Error: create server "remote-api": registry: validation failed: body.headers.Authorization: use {"secret": ...} for credential headers; the registry does not store secret values
 ```
 
 Servers earlier in the file are already stored at that point; fix the file and run `push` again.
