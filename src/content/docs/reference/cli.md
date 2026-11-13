@@ -31,6 +31,8 @@ Every command that talks to the registry (`list`, `apply`, `push`, `pull`, `dele
 | Auth token | `~/.config/mcpfleet/token` (written by `auth login`, file mode `0600`) |
 | Secrets for `env` and `headers` values | `~/.config/mcpfleet/vault.enc`, encrypted with a key kept in the OS keyring |
 
+No public registry answers at the default URL yet: point mcpfleet at your own registry (see [Self-Hosting the Registry](/guides/self-hosting/)) with `auth login --url` or `MCPFLEET_REGISTRY_URL`. When nothing answers at the default URL, commands that talk to the registry fail with `registry: request failed: … — no registry answers at the default URL https://registry.mcpfleet.dev; point mcpfleet at your registry with 'mcpfleet auth login --url <registry>' or MCPFLEET_REGISTRY_URL`.
+
 A trailing `/` on the registry URL is ignored. Without a stored token `list`, `push`, `pull` and `delete` fail with `Error: registry client: registry: not authenticated — run 'mcpfleet auth login' first`, and `apply` fails with `Error: registry: not authenticated — run 'mcpfleet auth login' first`.
 
 ---

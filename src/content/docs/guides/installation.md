@@ -26,6 +26,8 @@ The formula is a Homebrew cask in the [`mcpfleet/homebrew-tap`](https://github.c
 curl -fsSL https://raw.githubusercontent.com/mcpfleet/mcpfleet/main/install.sh | sh
 ```
 
+Once the mcpfleet.dev domain is live, the same script is also served at `https://mcpfleet.dev/install.sh`. This site republishes it from `main` of the mcpfleet repository on every deploy and at least once a day, so both addresses give the same file.
+
 The script picks the archive for your OS (`linux` or `darwin`) and architecture (`amd64` or `arm64`) from the latest [GitHub Release](https://github.com/mcpfleet/mcpfleet/releases), checks it against the release's `checksums.txt` and installs `mcpfleet` to `/usr/local/bin` when that directory is writable, otherwise to `~/.local/bin`. It never calls `sudo`, and if the checksum does not match it stops before installing anything. When the target directory is not on your `PATH`, it prints the line to add.
 
 Two environment variables change what it does:

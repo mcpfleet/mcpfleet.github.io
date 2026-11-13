@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Daily rebuild keeps install.sh in step with mcpfleet/mcpfleet main.
+  schedule:
+    - cron: '17 4 * * *'
 
 permissions:
   contents: read
@@ -30,6 +33,14 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Download install.sh from mcpfleet main
+        run: |
+          curl -fsSL --retry 3 https://raw.githubusercontent.com/mcpfleet/mcpfleet/main/install.sh -o public/install.sh
+          if [ "$(head -c 2 public/install.sh)" != '#!' ]; then
+            echo "::error::public/install.sh does not start with a shebang"
+            exit 1
+          fi
 
       - name: Build with Astro
         run: npm run build
