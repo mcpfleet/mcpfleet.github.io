@@ -23,10 +23,14 @@ The formula is a Homebrew cask in the [`mcpfleet/homebrew-tap`](https://github.c
 ## Install script (Linux / macOS)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mcpfleet/mcpfleet/main/install.sh | sh
+curl -fsSL https://mcpfleet.dev/install.sh | sh
 ```
 
-Once the mcpfleet.dev domain is live, the same script is also served at `https://mcpfleet.dev/install.sh`. This site republishes it from `main` of the mcpfleet repository on every deploy and at least once a day, so both addresses give the same file.
+This site publishes the script from `main` of the mcpfleet repository on every deploy and at least once a day, so it is the same file as in the repository. If mcpfleet.dev is unreachable, or you need a change to `install.sh` from before the daily sync, run it straight from `main` instead:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mcpfleet/mcpfleet/main/install.sh | sh
+```
 
 The script picks the archive for your OS (`linux` or `darwin`) and architecture (`amd64` or `arm64`) from the latest [GitHub Release](https://github.com/mcpfleet/mcpfleet/releases), checks it against the release's `checksums.txt` and installs `mcpfleet` to `/usr/local/bin` when that directory is writable, otherwise to `~/.local/bin`. It never calls `sudo`, and if the checksum does not match it stops before installing anything. When the target directory is not on your `PATH`, it prints the line to add.
 
@@ -38,7 +42,7 @@ Two environment variables change what it does:
 | `MCPFLEET_INSTALL_DIR` | `/usr/local/bin` if writable, else `~/.local/bin` | directory the binary goes to |
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mcpfleet/mcpfleet/main/install.sh | MCPFLEET_VERSION=0.1.0 MCPFLEET_INSTALL_DIR="$HOME/bin" sh
+curl -fsSL https://mcpfleet.dev/install.sh | MCPFLEET_VERSION=0.1.0 MCPFLEET_INSTALL_DIR="$HOME/bin" sh
 ```
 
 The script installs released versions only, so it works once the first release is published; until then it stops with `no mcpfleet release found` and installs nothing. Use [Build from Source](#build-from-source) in the meantime. On Windows, follow [Windows (PowerShell)](#windows-powershell) below.
@@ -46,7 +50,7 @@ The script installs released versions only, so it works once the first release i
 To read the script before running it, download it first:
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/mcpfleet/mcpfleet/main/install.sh
+curl -fsSLO https://mcpfleet.dev/install.sh
 less install.sh
 sh install.sh
 ```
