@@ -116,13 +116,91 @@ Registry: https://registry.mcpfleet.dev (from default)
 List all MCP servers in the registry. Alias: `ls`.
 
 ```bash
-mcpfleet list
+mcpfleet list [--json]
 ```
+
+| Flag | Description |
+|------|-------------|
+| `--json` | Print the servers as a JSON array instead of the table |
 
 ```text
 MCP Servers
 
 NAME        TRANSPORT  TARGET
+----        ---------  ------
+filesystem  stdio      npx -y @modelcontextprotocol/server-filesystem '/home/me/My Projects'
+github      stdio      npx -y @modelcontextprotocol/server-github
+remote-api  http       https://example.com/mcp
+```
+
+`TRANSPORT` is `stdio`, `http` or `sse`; a server stored without a transport shows as `stdio`. `TARGET` is the command with its arguments for a `stdio` server and the `url` for an `http` or `sse` server. A server with no command or URL shows `-`.
+
+The command and each argument in `TARGET` are quoted like words in a POSIX shell, so an argument with a space reads as one argument: `/home/me/My Projects` shows as `'/home/me/My Projects'`, an empty argument as `''`, and `it's` as `'it'\''s'`. A word that holds only letters, digits and `@ % + = : , . / _ -` is printed as is. Characters such as `$` and `~` are quoted too, because the agent passes arguments literally, without expanding them.
+
+An empty registry prints `No servers registered.`
+
+### JSON output
+
+With `--json`, `list` prints a JSON array with one object per server, using the same keys as a file for [`push`](#mcpfleet-push) — `push` reads JSON as well as YAML, so the output works as a backup you can push back:
+
+```bash
+mcpfleet list --json > servers.json
+mcpfleet push servers.json
+```
+
+```json
+[
+  {
+    "name": "github",
+    "description": "GitHub MCP server",
+    "transport": "stdio",
+    "install": {
+      "type": "npx",
+      "package": "@modelcontextprotocol/server-github"
+    },
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-github"
+    ],
+    "env": {
+      "GITHUB_TOKEN": {
+        "secret": "github_token"
+      }
+    },
+    "tags": [
+      "dev"
+    ]
+  },
+  {
+    "name": "remote-api",
+    "transport": "http",
+    "install": {
+      "type": "",
+      "package": ""
+    },
+    "command": "",
+    "url": "https://example.com/mcp",
+    "headers": {
+      "Authorization": {
+        "secret": "example_auth"
+      }
+    }
+  }
+]
+```
+
+- Secrets appear only as references (`{"secret": "<name>"}`), never as values: `list` does not read your local vault. Literal values stored in the registry (`{"value": "…"}`) are printed as stored.
+- The registry's `id`, `created_at` and `updated_at` fields are not included.
+- An empty registry prints `[]`, with no header or message, so scripts can always parse the output.
+- Characters such as `&` in URLs are printed as is, not escaped.
+
+For example, to print the names of the servers tagged `dev` with `jq`:
+
+```bash
+mcpfleet list --json | jq -r '.[] | select(.tags // [] | index("dev")) | .name'
+```
+
 ----        ---------  ------
 filesystem  stdio      npx -y @modelcontextprotocol/server-filesystem /home/me/projects
 github      stdio      npx -y @modelcontextprotocol/server-github
