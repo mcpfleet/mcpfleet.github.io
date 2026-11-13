@@ -72,6 +72,8 @@ each agent gets the following entry.
 
 The servers go into the top-level `mcpServers` of `~/.claude.json`, which is Claude Code's **user** scope: they are available in every project. The rest of Claude Code's state in that file is kept.
 
+When `CLAUDE_CONFIG_DIR` is set, the file is `$CLAUDE_CONFIG_DIR/.claude.json`. The variable must be an absolute path; with a relative one, `apply` and `list` stop with `claude-code: CLAUDE_CONFIG_DIR must be an absolute path (got "…")` and write nothing.
+
 Claude Code also writes this file while it runs. Run `apply claude-code` while Claude Code is closed, or start a new session afterwards and check the result with `claude mcp list`.
 
 :::note[Changed: claude-code no longer writes Claude Desktop's config]
