@@ -24,7 +24,7 @@ Once you are logged in (`mcpfleet auth login`), the terminal UI (`mcpfleet` with
 
 Every adapter updates the file in place instead of replacing it:
 
-- **Upsert by name.** Each applied server is written under its registry `name`. An entry with that name is replaced; every other entry under the key stays as it was.
+- **Upsert by name.** Each applied server is written under its registry `name`; every other entry under the key stays as it was. An existing entry with that name is updated, not replaced: mcpfleet sets the fields it manages and keeps every other field, so options you added in the agent (`disabled`, `autoApprove`, a timeout, Zed's `enabled`, …) survive the next `apply`. See [Managed entry fields](#managed-entry-fields).
 - **Other settings are kept.** Keys outside the servers key (editor settings, Claude Code's account and project state, …) are left intact.
 - **Invalid files are not touched.** If the file is not valid JSON, its root is not an object, or the servers key is not an object, `apply` fails with an error and writes nothing. Fix the file and run it again.
 - **Backup.** Before overwriting an existing file, mcpfleet copies it to `<file>.bak` (for example `~/.cursor/mcp.json.bak`). Each run replaces the previous backup.
@@ -33,6 +33,21 @@ Every adapter updates the file in place instead of replacing it:
 - **Nothing is removed.** `apply` only adds and updates entries. A server deleted from the registry, or left out by `--tag`, stays in the agent config until you remove it by hand.
 
 A missing file (or an empty one) is created, including its directory.
+
+### Managed entry fields
+
+These are the fields `apply` owns in a server entry. In an existing entry it removes all of them first and then writes the ones the server has, so a managed field the server no longer has disappears: a server without `env` in the registry loses its old `env`, and a server that switches between local and remote loses the fields of its old transport. `env` and `headers` are replaced as a whole. Any other field in the entry is kept.
+
+| Agent | Managed fields |
+|-------|----------------|
+| `cursor` | `command`, `args`, `env`, `url`, `headers`, `type` |
+| `claude-code` | `command`, `args`, `env`, `url`, `headers`, `type` |
+| `claude-desktop` | `command`, `args`, `env` |
+| `windsurf` | `command`, `args`, `env`, `serverUrl`, `url`, `headers`, `type` |
+| `zed` | `command`, `args`, `env`, `url`, `headers` |
+| `crush` | `command`, `args`, `env`, `url`, `headers`, `type` |
+
+Cursor and Windsurf never write `type`, and Windsurf writes `serverUrl` rather than its alias `url`; both are still managed, so a stale value cannot contradict the new entry. In Zed's `settings.json` the comments inside an applied entry are kept as well. A Zed extension entry (`"source": "extension"`) with the same name as a registry server gets `command` written beside its `settings`; rename the server in the registry if you want to keep the extension's entry apart.
 
 :::caution[Secrets end up in plain text]
 `env` entries that reference a secret are resolved from your local vault before writing, so the agent's config file contains the secret **value**. A secret missing from the vault stops `apply` with an error naming it, and nothing is written; store it with `mcpfleet secret set <name>`. Keep these files out of version control and shared folders.
