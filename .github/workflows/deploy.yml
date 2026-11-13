@@ -28,11 +28,17 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      # Blocks push and manual deploys on high/critical findings; the daily
+      # rebuild only reports them so install.sh keeps being republished.
+      - name: Audit dependencies
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: ${{ github.event_name == 'schedule' }}
 
       - name: Download install.sh from mcpfleet main
         run: |
