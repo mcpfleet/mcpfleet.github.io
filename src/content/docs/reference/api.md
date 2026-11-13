@@ -129,8 +129,13 @@ A server is addressed by its name in `/v1/servers/{id}`, so the name has to work
 | `.` or `..` | `name must not be "." or ".."` |
 | empty or only whitespace | `name must not be empty or only whitespace` |
 | contains a control character (U+0000–U+001F, U+007F, U+0080–U+009F) | `name must not contain control characters (found U+000A at byte 1)` |
+| contains an invisible format character (Unicode category Cf, e.g. U+00AD, U+200B–U+200F, U+202A–U+202E, U+2060–U+2064, U+2066–U+2069, U+FEFF, tag characters in U+E0000–U+E007F) | `name must not contain invisible format characters (found U+202E at byte 1)` |
 
-`.` and `..` are dot segments: curl, browsers and reverse proxies remove them from a path before it reaches the registry, so such a server could not be read, updated or deleted. The control character message names the first such character by its code point and byte offset, because it is invisible in the JSON `value`. An empty name also gets the schema error `expected length >= 1`.
+`.` and `..` are dot segments: curl, browsers and reverse proxies remove them from a path before it reaches the registry, so such a server could not be read, updated or deleted. Format characters are invisible in a terminal, and some change how the text around them is shown: a name holding U+202E (right-to-left override) can pass for another name in `mcpfleet list`. The control character and format character messages each name the first such character by its code point and byte offset, because it is invisible in the JSON `value`; a name with both kinds gets both messages. An empty name also gets the schema error `expected length >= 1`.
+
+The format character rule also rejects emoji sequences joined by U+200D (zero width joiner), such as 👩‍💻, and subdivision flags built from tag characters (e.g. the flag of England). A single emoji, with or without the variation selector U+FE0F, and country flags made of regional indicator letters stay valid.
+
+A server stored before a rule existed keeps working: `GET` and `DELETE /v1/servers/{id}` do not check the name, and `PUT` with a valid new `name` renames it. Send the name percent-encoded in the path, e.g. `a%E2%80%AEb` for `a` U+202E `b`.
 
 Names that only look similar stay valid, for example `.a`, `a..b`, `...`, `a/b` (sent as `a%2Fb` in the path) and names with non-ASCII letters. Leading or trailing spaces are kept as part of the name.
 
